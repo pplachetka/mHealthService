@@ -1,39 +1,78 @@
 package com.epa.mhealthservice.location
 
+import android.content.Context
 import android.location.Location
-import com.google.android.gms.location.LocationCallback
+import android.os.Looper
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
 
-class LocationRepository {
+class LocationRepository(context: Context) {
 
     private val _locationFlow = MutableSharedFlow<Location>(replay = 0)
     val locationFlow: SharedFlow<Location> = _locationFlow
 
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+    private lateinit var updateRequest: LocationRequest
+
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
 
 
 
 
     /*
-    Returns the current location once
+    Returns the current location once (experimental)
      */
     fun getCurrentLocation():Location{
 
+        val cts = CancellationTokenSource()
+        lateinit var tempLocation: Location
+
+        fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cts.token).addOnSuccessListener { result ->
+            tempLocation = result
+        }
+        return tempLocation
     }
 
 
     /*
     Generates an UpdateRequest for location updates with a set frequency
      */
-    fun generateUpdateRequest(frequencyInMillis:Long): LocationCallback {
-
+    fun generateUpdateRequest(frequencyInMillis:Long) {
+        updateRequest = LocationRequest().apply {
+            interval = frequencyInMillis
+            fastestInterval = 3000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
     }
 
 
     /*
     Start collecting location updates and publish them to flow
      */
-    fun subscribeLocationUpdates(){
+    fun subscribeLocationUpdates(frequencyInMillis: Long){
+
+        locationCallback = object : LocationCallback(){
+            override fun onLocationResult(result: LocationResult) {
+                super.onLocationResult(result)
+
+                scope.launch {
+                    _locationFlow.emit(result.lastLocation)
+                }
+            }
+        }
+
+        fusedLocationProviderClient.requestLocationUpdates(
+            generateUpdateRequest(frequencyInMillis),
+            locationCallback,
+            Looper.getMainLooper()
+        )
 
     }
 
@@ -43,7 +82,19 @@ class LocationRepository {
      */
     fun unsubscribeLocationUpdates(){
 
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
+
+    init {
+        /*
+        Initialize FLP
+         */
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+
+
+
+
+    }
 
 }

@@ -76,4 +76,9 @@ dependencies {
      */
     implementation 'com.google.android.gms:play-services-location:19.0.1'
 
+    /*
+    Permission handling for Compose
+     */
+    implementation 'com.google.accompanist:accompanist-permissions:0.24.3-alpha'
+
 }
