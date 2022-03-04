@@ -3,6 +3,7 @@ package com.epa.mhealthservice.location
 import android.content.Context
 import android.location.Location
 import android.os.Looper
+import androidx.compose.runtime.MutableState
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.CoroutineScope
@@ -29,15 +30,18 @@ class LocationRepository(context: Context) {
     /*
     Returns the current location once (experimental)
      */
-    fun getCurrentLocation():Location{
+    fun getCurrentLocation(state : MutableState<String>){
 
         val cts = CancellationTokenSource()
         lateinit var tempLocation: Location
 
         fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cts.token).addOnSuccessListener { result ->
-            tempLocation = result
+            if (result != null){
+
+                state.value = result.latitude.toString()
+
+            }
         }
-        return tempLocation
     }
 
 
@@ -68,8 +72,10 @@ class LocationRepository(context: Context) {
             }
         }
 
+        generateUpdateRequest(frequencyInMillis)
+
         fusedLocationProviderClient.requestLocationUpdates(
-            generateUpdateRequest(frequencyInMillis),
+            updateRequest,
             locationCallback,
             Looper.getMainLooper()
         )

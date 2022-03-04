@@ -12,6 +12,6 @@ interface StepsDao {
     fun insertSteps(steps:Steps)
 
     @Query("SELECT * FROM steps WHERE date = :date")
-    fun getStepsByDate(date:String)
+    fun getStepsByDate(date:String):Steps
 
 }

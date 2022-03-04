@@ -12,5 +12,5 @@ interface ChallengeDao {
     fun insertFinishedChallenge(challenge: Challenge)
 
     @Query("SELECT * FROM challenge WHERE date = :date")
-    fun getDailyChallenges(date:String)
+    fun getDailyChallenges(date:String):List<Challenge>
 }

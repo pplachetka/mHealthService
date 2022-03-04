@@ -1,5 +1,6 @@
 package com.epa.mhealthservice
 
+import android.Manifest
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,8 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import com.epa.mhealthservice.location.LocationRepository
 import com.epa.mhealthservice.ui.theme.MHealthServiceTheme
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
 class MainActivity : ComponentActivity() {
+    @ExperimentalPermissionsApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -35,17 +39,28 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@ExperimentalPermissionsApi
 @Composable
 fun Greeting(repository: LocationRepository) {
     val text = remember{ mutableStateOf("")}
+    val permissionList = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+    val permissions = rememberMultiplePermissionsState(permissions = permissionList)
 
     Column {
+        Text(text = if(permissions.allPermissionsGranted) "permissions granted" else "no permission yet")
+        Button(onClick = { 
+            
+            if(!permissions.allPermissionsGranted){
+                permissions.launchMultiplePermissionRequest()
+            }
+            
+        }) {
+            Text(text = "Request permissions")
+        }
 
         Button(onClick = {
-            var addedText = repository.getCurrentLocation().latitude.toString()
-
-            text.value = addedText
-
+            var addedText = repository.getCurrentLocation(text)
+            
 
         }) {
             Text(text = "Get current location")
