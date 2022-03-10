@@ -14,4 +14,6 @@ interface HotspotsDao {
     @Query("SELECT * FROM hotspots")
     fun getAllHotspots():List<Hotspots>
 
+    @Query("DELETE FROM hotspots")
+    fun deleteAllHotspots()
 }

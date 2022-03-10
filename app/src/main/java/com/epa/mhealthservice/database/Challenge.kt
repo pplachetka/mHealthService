@@ -6,5 +6,5 @@ import androidx.room.PrimaryKey
 @Entity
 data class Challenge(
     @PrimaryKey(autoGenerate = false) val date:String,
-    val completed:Boolean
+    var completed:Boolean
 )

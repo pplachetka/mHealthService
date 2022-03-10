@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Hotspots(
-    @PrimaryKey(autoGenerate = true) val id:Int = 0,
-    val longitude:Long,
-    val latitude:Long
+    @PrimaryKey(autoGenerate = true) var id:Int? = null,
+    val longitude:Double,
+    val latitude:Double
 )
