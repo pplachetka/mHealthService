@@ -5,22 +5,22 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import com.epa.mhealthservice.database.Steps
+import com.epa.mhealthservice.database.StepsDao
+import com.epa.mhealthservice.misc.DateFetcher
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 
-class MotionRepository(val context: Context): SensorEventListener {
+class MotionRepository(val context: Context, val stepsDao: StepsDao): SensorEventListener {
 
 
-    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     val stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
 
     var stepcount: Int = 0
     var stepFlow = MutableSharedFlow<Int>(replay = 0)
 
-    val scope = CoroutineScope(Dispatchers.IO + Job())
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
 
 
 
@@ -39,6 +39,10 @@ class MotionRepository(val context: Context): SensorEventListener {
 
                 stepcount++
                 stepFlow.emit(stepcount)
+
+                //if(stepcount % 20 == 0){
+                    stepsDao.insertSteps(Steps(DateFetcher.getParsedToday(), stepcount))
+                //}
             }
         }
     }

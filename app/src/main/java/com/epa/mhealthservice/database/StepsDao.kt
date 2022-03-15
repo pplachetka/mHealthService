@@ -11,7 +11,7 @@ interface StepsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertSteps(steps:Steps)
 
-    @Query("SELECT * FROM steps WHERE date = :date")
-    fun getStepsByDate(date:String):Steps
+    @Query("SELECT stepCount FROM steps WHERE date = :date")
+    fun getStepsByDate(date:String):Int
 
 }

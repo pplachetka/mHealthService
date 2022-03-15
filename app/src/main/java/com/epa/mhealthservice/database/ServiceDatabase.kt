@@ -19,7 +19,15 @@ abstract fun hotspotsDao():HotspotsDao
 
 companion object{
 
-    fun buildDatabase(context:Context) = Room.databaseBuilder(context, ServiceDatabase::class.java, "service-database").build()
+    private var instance: ServiceDatabase? = null
+
+    fun buildDatabase(context:Context): ServiceDatabase{
+
+        if(instance == null){
+            instance = Room.databaseBuilder(context, ServiceDatabase::class.java, "service-database").build()
+        }
+        return instance as ServiceDatabase
+    }
 }
 
 }

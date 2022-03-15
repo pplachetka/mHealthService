@@ -29,6 +29,26 @@
             android:name=".MainService"
             android:foregroundServiceType="location">
         </service>
+        <receiver
+            android:name=".notification.SummaryReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action
+                    android:name="com.epa.SUMMARY">
+                </action>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".notification.ChallengeDeniedReceiver"
+            android:enabled="true"
+            android:exported="true">
+        </receiver>
+        <service
+            android:name=".misc.SummaryService">
+
+        </service>
+
     </application>
 
 </manifest>

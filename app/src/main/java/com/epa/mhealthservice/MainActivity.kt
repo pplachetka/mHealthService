@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -18,17 +17,18 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.room.Room
+import com.epa.mhealthservice.database.Challenge
+import com.epa.mhealthservice.database.ChallengeDao
 import com.epa.mhealthservice.database.ServiceDatabase
+import com.epa.mhealthservice.database.StepsDao
 import com.epa.mhealthservice.location.LocationRepository
+import com.epa.mhealthservice.misc.DateFetcher
 import com.epa.mhealthservice.motion.MotionRepository
-import com.epa.mhealthservice.notification.TextFragments
+import com.epa.mhealthservice.notification.ChallengeDeniedReceiver
+import com.epa.mhealthservice.notification.NotificationRepository
 import com.epa.mhealthservice.ui.theme.MHealthServiceTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -43,41 +43,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        val db = Room.databaseBuilder(applicationContext,ServiceDatabase::class.java, "service-database").build()
+        val db = ServiceDatabase.buildDatabase(applicationContext)
 
 
         val repo = LocationRepository(applicationContext, db.hotspotsDao())
+
+        val noma = NotificationRepository(applicationContext, db.challengeDao(), db.stepsDao())
 /*
-        val motion = MotionRepository(applicationContext)
+        val motion = MotionRepository(applicationContext, db.stepsDao())
         CoroutineScope(Dispatchers.IO + Job()).launch{
 
-            repo.subscribeLocationUpdates(8000)
-
-            repo.locationFlow.collect{
-
-                withContext(Dispatchers.Main){
-
-                    Toast.makeText(this@MainActivity, it.longitude.toString(), Toast.LENGTH_SHORT).show()
-                }
-
-            }
-
-
-
-
-
-/*
             motion.stepFlow.collect {
 
-                println(it.toString())
-
-
+                withContext(Dispatchers.Main){
+                    println(it.toString())
+                }
             }
 
- */
         }
-
 */
+
 
 
 
@@ -85,7 +70,7 @@ class MainActivity : ComponentActivity() {
             MHealthServiceTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-                    Greeting(repo, this, applicationContext)
+                    Greeting(repo, noma, this, applicationContext, db.challengeDao(), db.stepsDao())
                 }
             }
         }
@@ -95,7 +80,14 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.Q)
 @ExperimentalPermissionsApi
 @Composable
-fun Greeting(repository: LocationRepository, context: Context, appContext: Context) {
+fun Greeting(
+    repository: LocationRepository,
+    notificationRepository: NotificationRepository,
+    context: Context,
+    appContext: Context,
+    challengeDao: ChallengeDao,
+    stepsDao: StepsDao
+) {
     val permissionList = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
     val permissions = rememberMultiplePermissionsState(permissions = permissionList)
     val permissions2 = rememberPermissionState(permission = Manifest.permission.ACTIVITY_RECOGNITION)
@@ -155,10 +147,29 @@ Column {
 
         Button(onClick = {
 
-            println(TextFragments.createSummaryText(2))
+            context.sendBroadcast(Intent("com.epa.SUMMARY"))
+
+          //  context.sendBroadcast(Intent(context, ChallengeDeniedReceiver::class.java))
+
+          //  notificationRepository.sendChallengeNotification()
 
         }) {
             Text(text = "Multibutton")
+        }
+
+        Button(onClick = {
+
+            var result = CoroutineScope(Dispatchers.IO + Job()).async {
+                challengeDao.getDailyChallenges(DateFetcher.getParsedToday()).size.toString()
+
+            }
+            CoroutineScope(Dispatchers.Main + Job()).launch{
+                println(result.await())
+            }
+
+
+        }) {
+            Text(text = "Multibutton 2")
         }
     }
 

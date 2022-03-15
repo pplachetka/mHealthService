@@ -1,39 +1,55 @@
 package com.epa.mhealthservice.notification
 
+import android.app.Notification
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
+import android.content.IntentFilter
+import com.epa.mhealthservice.R
+import com.epa.mhealthservice.database.Challenge
 import com.epa.mhealthservice.database.ChallengeDao
 import com.epa.mhealthservice.database.StepsDao
+import com.epa.mhealthservice.misc.DateFetcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
-class NotificationRepository(appContext: Context, val stepsDao: StepsDao, val challengeDao: ChallengeDao): BroadcastReceiver() {
+class NotificationRepository(val appContext: Context, val challengeDao: ChallengeDao, val stepsDao: StepsDao) {
 
-    val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-
-
-
+    private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
 
     fun sendChallengeNotification(){
 
+        val denyIntent = Intent(appContext, ChallengeDeniedReceiver::class.java)
+        val denyPendingIntent = PendingIntent.getBroadcast(appContext, 112115, denyIntent, 0)
 
+        val notification = Notification.Builder(appContext, "dh-service-background")
+            .setContentTitle("Eine neue Herausforderung für dich!")
+            .setContentText(TextFragments.createChallengeText())
+            .setSmallIcon(R.drawable.flash_icon)
+            .setStyle(Notification.BigTextStyle())
+            .addAction(Notification.Action.Builder(null, "Kein Interesse", denyPendingIntent).build())
+            .setDeleteIntent(denyPendingIntent)
+            .build()
+
+        notificationManager.notify(56226, notification)
     }
 
 
-    fun sendSummaryNotification(){
+    init {
+        val receiver = SummaryReceiver()
+
+        val filter = IntentFilter("com.epa.SUMMARY")
+
+        appContext.registerReceiver(receiver, filter)
 
     }
 
-
-
-
-
-    override fun onReceive(p0: Context?, p1: Intent?) {
-        TODO("Not yet implemented")
-    }
 
 
 }
