@@ -41,6 +41,20 @@ class NotificationRepository(val appContext: Context, val challengeDao: Challeng
     }
 
 
+    fun sendSuccessNotification(){
+
+
+        val notification = Notification.Builder(appContext, "dh-service-background")
+            .setContentTitle("Eine neue Herausforderung für dich!")
+            .setContentText("Stark! 💪 \nDu hast die Herausforderung abgeschlossen. Mach weiter so!")
+            .setSmallIcon(R.drawable.succes_icon)
+            .setStyle(Notification.BigTextStyle())
+            .build()
+
+        notificationManager.notify(56887, notification)
+    }
+
+
     init {
         val receiver = SummaryReceiver()
 

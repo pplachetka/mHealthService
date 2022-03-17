@@ -3,6 +3,7 @@ package com.epa.mhealthservice
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -159,14 +160,8 @@ Column {
 
         Button(onClick = {
 
-            var result = CoroutineScope(Dispatchers.IO + Job()).async {
-                challengeDao.getDailyChallenges(DateFetcher.getParsedToday()).size.toString()
 
-            }
-            CoroutineScope(Dispatchers.Main + Job()).launch{
-                println(result.await())
-            }
-
+            println(context.getSharedPreferences("service-kv", Context.MODE_PRIVATE).getBoolean("challengeActive", false))
 
         }) {
             Text(text = "Multibutton 2")

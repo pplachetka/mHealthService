@@ -14,6 +14,7 @@ import com.epa.mhealthservice.database.ServiceDatabase
 import com.epa.mhealthservice.location.LocationRepository
 import com.epa.mhealthservice.misc.DateFetcher
 import com.epa.mhealthservice.motion.MotionRepository
+import com.epa.mhealthservice.notification.NotificationRepository
 import com.epa.mhealthservice.notification.SummaryReceiver
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -33,10 +34,14 @@ class MainService: Service() {
 
     lateinit var locationRepository: LocationRepository
     lateinit var motionRepository: MotionRepository
+    lateinit var notificationRepository: NotificationRepository
 
     val scope = CoroutineScope(Dispatchers.IO + Job())
 
-    var previousPosition: Location = Location("empty")
+    var previousPosition: Location = Location("empty").apply {
+        latitude=51.168359
+        longitude=-28.082478
+    }
 
 
 
@@ -57,6 +62,7 @@ class MainService: Service() {
         db = ServiceDatabase.buildDatabase(applicationContext)
         locationRepository = LocationRepository(this, db.hotspotsDao())
         motionRepository = MotionRepository(applicationContext, db.stepsDao())
+        notificationRepository = NotificationRepository(applicationContext, db.challengeDao(), db.stepsDao())
 
         /*
         Setup AlarmManager for daily summary notifications
@@ -101,7 +107,8 @@ class MainService: Service() {
             }
         }
 
-connectToUpdates()
+        connectToUpdates()
+
         return START_STICKY
     }
 
@@ -133,9 +140,11 @@ connectToUpdates()
                 }
 
                     println("Longitude: ${locationUpdate.longitude}, Latitude: ${locationUpdate.latitude}")
-                }
+                    println("In challenge: " + challengeActive.toString())
+                println(previousPosition.distanceTo(locationUpdate))
 
-                /*
+
+
 
                 for(location in hotspotlist){
 
@@ -149,34 +158,43 @@ connectToUpdates()
                     First check if a challenge is running and if so, check if the distance is less than GPS precision tolerance radius --> send notification
                     if challenge is successful and switch challenge status, else wait for further updates to confirm possible success
                      */
-                    if(challengeActive){
-                        if(locationUpdate.distanceTo(destinationLocation) < 30){
+                    when(challengeActive){
 
-                            scope.launch {
-                                db.challengeDao().insertFinishedChallenge(Challenge(0, DateFetcher.getParsedToday(), true))
+                        true -> {
+
+                            if(locationUpdate.distanceTo(destinationLocation) < 30 && previousPosition.hasAccuracy()){
+
+                                scope.launch {
+                                    db.challengeDao().insertFinishedChallenge(Challenge(0, DateFetcher.getParsedToday(), true))
+                                }
+
+                                notificationRepository.sendSuccessNotification()
+
+                                sharedPreferences.edit().putBoolean("challengeActive", false).commit()
+
                             }
-                            sharedPreferences.edit().putBoolean("challengeActive", false).apply()
+                        }
+
+                        /*
+                        Check if user is completing a challenge. If not, propose a new challenge if the previous update was not in radius of a hotspot yet.
+                        */
+                        false -> {
+
+                            if(locationUpdate.distanceTo(destinationLocation) < 500 && previousPosition.distanceTo(destinationLocation) > 500 && previousPosition.hasAccuracy()){
+
+                                notificationRepository.sendChallengeNotification()
+
+                                sharedPreferences.edit().putBoolean("challengeActive", true).commit()
+
+                            }
                         }
                     }
-
-                    /*
-                    Check if user is completing a challenge. If not, propose a new challenge if the previous update was not in radius of a hotspot yet.
-                     */
-                    else{
-                        if(!challengeActive)
-                            if(locationUpdate.distanceTo(destinationLocation) < 500 && locationUpdate.distanceTo(previousPosition) > 500){
-
-                              //  challengeActive = true
-                            }
-                    }
-
-
 
                 }
 
                 previousPosition = locationUpdate
             }
-*/
+
         }
 
     }

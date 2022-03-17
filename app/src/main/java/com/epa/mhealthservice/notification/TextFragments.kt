@@ -60,11 +60,15 @@ object TextFragments {
 
     fun createSummaryText(challengesCompleted: Int, steps: Int): String{
 
-        if (challengesCompleted < 2){
-            return greetingSummary.random() + "Du hast heute leider nur $challengesCompleted Herausforderungen abgeschlossen. Du hast heute $steps Schritte gemacht." + motivationSummaryBad.random()
+        if (challengesCompleted == 0) {
+            return greetingSummary.random() + "Du hast heute leider keine Herausforderungen abgeschlossen. Du bist heute $steps Schritte gelaufen." + motivationSummaryBad.random()
+        }
+
+        if (challengesCompleted == 1){
+            return greetingSummary.random() + "Du hast heute eine Herausforderung abgeschlossen. Aber du hast heute $steps Schritte gemacht." + motivationSummaryBad.random()
         }
         if (challengesCompleted >= 2){
-            return greetingSummary.random() + "Bravo, du hast heute $challengesCompleted Herausforderungen gemeistert und $steps  Schritte gemacht." + motivationSummaryGood.random()
+            return greetingSummary.random() + "Bravo, du hast heute ganze $challengesCompleted Herausforderungen gemeistert und $steps  Schritte gemacht." + motivationSummaryGood.random()
         }
         return "Error"
     }
