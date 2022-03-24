@@ -180,7 +180,11 @@ class MainService: Service() {
                         */
                         false -> {
 
-                            if(locationUpdate.distanceTo(destinationLocation) < 500 && previousPosition.distanceTo(destinationLocation) > 500 && previousPosition.hasAccuracy()){
+                            if(locationUpdate.distanceTo(destinationLocation) < 500         //
+                                && previousPosition.distanceTo(destinationLocation) > 500   //
+                                && previousPosition.hasAccuracy()                           //Distinction between artificial starting point and natural update
+                                && previousPosition.distanceTo(locationUpdate) >= 40)       //Distance made between two updates to measure movement speed ->
+                                {                                                           //40m ~ movement of tram (15 to 20 km/h ~ 4 to 5.5 m/s) * 10 sec (update freq.)
 
                                 notificationRepository.sendChallengeNotification()
 
@@ -189,7 +193,6 @@ class MainService: Service() {
                             }
                         }
                     }
-
                 }
 
                 previousPosition = locationUpdate
@@ -210,9 +213,6 @@ class MainService: Service() {
 
     }
 
-    fun createDailySummary(){
-
-    }
 
 
 }

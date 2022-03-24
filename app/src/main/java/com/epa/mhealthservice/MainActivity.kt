@@ -89,100 +89,116 @@ fun Greeting(
     challengeDao: ChallengeDao,
     stepsDao: StepsDao
 ) {
-    val permissionList = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+    val permissionList =
+        listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
     val permissions = rememberMultiplePermissionsState(permissions = permissionList)
-    val permissions2 = rememberPermissionState(permission = Manifest.permission.ACTIVITY_RECOGNITION)
+    val permissions2 =
+        rememberPermissionState(permission = Manifest.permission.ACTIVITY_RECOGNITION)
 
-Column {
+    Column {
 
-    Column(Modifier.background(Color.Gray)) {
-        Row {
+        Column(Modifier.background(Color.Gray)) {
+            Row {
+                Button(onClick = {
+
+                    if (!permissions.allPermissionsGranted) {
+                        permissions.launchMultiplePermissionRequest()
+                    }
+
+                }) {
+                    Text(text = "Request location permissions")
+                }
+                Text(text = if (permissions.allPermissionsGranted) "permissions granted" else "no permission yet")
+            }
+
+            Row {
+                Button(onClick = {
+
+                    permissions2.launchPermissionRequest()
+
+                }) {
+                    Text(text = "Request activity permissions")
+                }
+                Text(text = if (permissions2.status.isGranted) "permission granted" else "no permission yet")
+            }
+
+
+
+
+
             Button(onClick = {
 
-                if (!permissions.allPermissionsGranted) {
-                    permissions.launchMultiplePermissionRequest()
+                repository.getCurrentLocation(context)
+
+            }) {
+                Text(text = "Get current location")
+            }
+
+            Button(onClick = {
+
+                repository.getHotspots()
+            }) {
+                Text(text = "Get hotspot count")
+            }
+
+
+            Button(onClick = {
+                repository.deleteHotspots()
+            }) {
+                Text(text = "Delete all Hotspots")
+            }
+
+            Button(onClick = {
+
+                val current = context.getSharedPreferences("service-kv", Context.MODE_PRIVATE)
+                    .getBoolean("challengeActive", true)
+
+                if (current) {
+                    context.getSharedPreferences("service-kv", Context.MODE_PRIVATE).edit()
+                        .putBoolean("challengeActive", false).apply()
+                    println("Current active state is now off")
+                } else {
+                    context.getSharedPreferences("service-kv", Context.MODE_PRIVATE).edit()
+                        .putBoolean("challengeActive", true).apply()
+                    println("Current active state is now on")
                 }
 
-            }) {
-                Text(text = "Request location permissions")
-            }
-            Text(text = if (permissions.allPermissionsGranted) "permissions granted" else "no permission yet")
-        }
+                //  context.sendBroadcast(Intent("com.epa.SUMMARY"))
 
-        Row {
+                //  context.sendBroadcast(Intent(context, ChallengeDeniedReceiver::class.java))
+
+                //  notificationRepository.sendChallengeNotification()
+
+            }) {
+                Text(text = "Toggle active state")
+            }
+
             Button(onClick = {
 
-                permissions2.launchPermissionRequest()
+
+
 
             }) {
-                Text(text = "Request activity permissions")
+                Text(text = "Multibutton 2")
             }
-            Text(text = if (permissions2.status.isGranted) "permission granted" else "no permission yet")
         }
 
+        Column(
+            Modifier
+                .background(Color.Green)
+                .fillMaxWidth()
+        ) {
 
+            Button(onClick = {
 
+                val serviceIntent = Intent(appContext, MainService::class.java)
 
+                appContext.startForegroundService(serviceIntent)
 
-        Button(onClick = {
-
-            repository.getCurrentLocation(context)
-
-        }) {
-            Text(text = "Get current location")
-        }
-
-        Button(onClick = {
-
-            repository.getHotspots()
-        }) {
-            Text(text = "Get hotspot count")
-        }
-
-
-        Button(onClick = {
-            repository.deleteHotspots()
-        }) {
-            Text(text = "Delete all Hotspots")
-        }
-
-        Button(onClick = {
-
-            context.sendBroadcast(Intent("com.epa.SUMMARY"))
-
-          //  context.sendBroadcast(Intent(context, ChallengeDeniedReceiver::class.java))
-
-          //  notificationRepository.sendChallengeNotification()
-
-        }) {
-            Text(text = "Multibutton")
-        }
-
-        Button(onClick = {
-
-
-            println(context.getSharedPreferences("service-kv", Context.MODE_PRIVATE).getBoolean("challengeActive", false))
-
-        }) {
-            Text(text = "Multibutton 2")
+            }) {
+                Text(text = "Start Service")
+            }
         }
     }
-
-    Column(
-        Modifier
-            .background(Color.Green)
-            .fillMaxWidth()) {
-
-        Button(onClick = {
-
-            val serviceIntent = Intent(appContext, MainService::class.java)
-
-            appContext.startForegroundService(serviceIntent)
-
-        }) {
-            Text(text = "Start Service")
-        }
-    }
-}
 }
 
