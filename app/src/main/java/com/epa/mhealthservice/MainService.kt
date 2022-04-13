@@ -128,7 +128,7 @@ class MainService: Service() {
 
         scope.launch {
 
-            locationRepository.subscribeLocationUpdates(10000)
+            locationRepository.subscribeLocationUpdates(5000)
 
             locationRepository.locationFlow.collect{ locationUpdate ->
 
@@ -183,8 +183,8 @@ class MainService: Service() {
                             if(locationUpdate.distanceTo(destinationLocation) < 500         //
                                 && previousPosition.distanceTo(destinationLocation) > 500   //
                                 && previousPosition.hasAccuracy()                           //Distinction between artificial starting point and natural update
-                                && previousPosition.distanceTo(locationUpdate) >= 40)       //Distance made between two updates to measure movement speed ->
-                                {                                                           //40m ~ movement of tram (15 to 20 km/h ~ 4 to 5.5 m/s) * 10 sec (update freq.)
+                                && previousPosition.distanceTo(locationUpdate) >= 20)       //Distance made between two updates to measure movement speed ->
+                                {                                                           //20m ~ movement of tram (15 to 20 km/h ~ 4 to 5.5 m/s) * 10 sec (update freq.)
 
                                 notificationRepository.sendChallengeNotification()
 
